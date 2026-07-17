@@ -540,39 +540,45 @@ document.addEventListener('DOMContentLoaded', () => {
             let tAge = undefined;
             let tYear = undefined;
 
-            // Проверяем, не заголовок ли это
-            if (index === 0) {
-                const headerDateMatch = line.match(/(?:на\s+|дата\s*посещения\s*)?(\d{1,2})[\.\-\/](\d{1,2})(?:[\.\-\/](\d{2}|\d{4}))?/i);
-                const lowerLine = line.toLowerCase();
-                const isHeader = headerDateMatch && (
-                    lowerLine.includes('на ') || 
-                    lowerLine.includes('дата') || 
-                    lowerLine.includes('тетис') ||
-                    lowerLine.includes('tour') ||
-                    lowerLine.includes('тур') ||
-                    lowerLine.includes('бронь') ||
-                    lowerLine.includes('заявка') ||
-                    lowerLine.includes('групп')
-                );
+            // Проверяем, не заголовок ли это (дата визита)
+            const headerDateMatch = line.match(/(?:на\s+|дата\s*посещения\s*|баратын\s*күніміз\s*)?(\d{1,2})[\.\-\/](\d{1,2})(?:[\.\-\/](\d{2}|\d{4}))?/i);
+            const lowerLine = line.toLowerCase();
+            const isHeader = headerDateMatch && (
+                lowerLine.includes('на ') || 
+                lowerLine.includes('дата') || 
+                lowerLine.includes('тетис') ||
+                lowerLine.includes('tour') ||
+                lowerLine.includes('тур') ||
+                lowerLine.includes('бронь') ||
+                lowerLine.includes('заявка') ||
+                lowerLine.includes('групп') ||
+                lowerLine.includes('баратын') ||
+                lowerLine.includes('күні') ||
+                lowerLine.includes('куни')
+            );
 
-                if (isHeader) {
-                    const day = headerDateMatch[1].padStart(2, '0');
-                    const month = headerDateMatch[2].padStart(2, '0');
-                    let currentYear = new Date().getFullYear();
-                    
-                    if (headerDateMatch[3]) {
-                        let y = headerDateMatch[3];
-                        if (y.length === 2) {
-                            const yInt = parseInt(y);
-                            currentYear = yInt > 50 ? 1900 + yInt : 2000 + yInt;
-                        } else {
-                            currentYear = parseInt(y);
-                        }
+            // Если это явно заголовок (или первая/вторая строка с подозрением на заголовок)
+            if (isHeader && (index === 0 || index === 1 || lowerLine.includes('дата') || lowerLine.includes('баратын') || lowerLine.includes('күні') || lowerLine.includes('куни'))) {
+                const day = headerDateMatch[1].padStart(2, '0');
+                const month = headerDateMatch[2].padStart(2, '0');
+                let currentYear = new Date().getFullYear();
+                
+                if (headerDateMatch[3]) {
+                    let y = headerDateMatch[3];
+                    if (y.length === 2) {
+                        const yInt = parseInt(y);
+                        currentYear = yInt > 50 ? 1900 + yInt : 2000 + yInt;
+                    } else {
+                        currentYear = parseInt(y);
                     }
-                    
-                    if (visitDateInput) visitDateInput.value = `${currentYear}-${month}-${day}`;
-                    return;
                 }
+                
+                if (visitDateInput) {
+                    visitDateInput.value = `${currentYear}-${month}-${day}`;
+                    // Триггерим событие change чтобы пересчитались тарифы для новой даты
+                    visitDateInput.dispatchEvent(new Event('change'));
+                }
+                return;
             }
 
             // Детекция категории из исходного текста
